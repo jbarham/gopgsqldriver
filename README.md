@@ -20,8 +20,8 @@ Installation
 ------------
 
 	cd $GOROOT/src/pkg
-	git clone git://github.com/jbarham/pgsqldriver.git github.com/jbarham/pgsqldriver
-	cd github.com/jbarham/pgsqldriver
+	git clone git://github.com/jbarham/gopgsqldriver.git github.com/jbarham/gopgsqldriver
+	cd github.com/jbarham/gopgsqldriver
 	make install
 
 The package `Makefile` assumes that `pg_config` is in your `$PATH` to
@@ -32,7 +32,7 @@ Usage
 -----
 
 	import "exp/sql"
-	import _ "github.com/jbarham/pgsqldriver"
+	import _ "github.com/jbarham/gopgsqldriver"
 		
 Note that by design pgsqldriver is not intended to be used directly.
 You do need to import it for the side-effect of registering itself with
