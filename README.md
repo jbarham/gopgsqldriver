@@ -45,7 +45,7 @@ About
 
 pgsqldriver is based on my [pgsql.go package](https://github.com/jbarham/pgsql.go).
 
-John Barham
-jbarham@gmail.com
-[@john_e_barham](twitter.com/john_e_barham)
+John Barham 
+jbarham@gmail.com 
+[@john_e_barham](http://www.twitter.com/john_e_barham) 
 Melbourne, Australia
