@@ -1,6 +1,7 @@
 package pgsqldriver
 
 import "C"
+
 // WARNING: This file is auto-generated! Do not edit.
 const (
 	BOOLOID             = 16
