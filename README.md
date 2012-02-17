@@ -9,10 +9,7 @@ Installation
 
 	git get github.com/jbarham/gopgsqldriver
 
-By default the package is configured to build on Linux.  Alternatively
-you can build it with the included `Makefile`, which assumes that `pg_config`
-is in your `$PATH` to automatically determine the location of the PostgreSQL
-include directory and the `libpq` shared library.
+By default the package is configured to build on Linux.
 
 Usage
 -----
