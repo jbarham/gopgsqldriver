@@ -1,32 +1,18 @@
 pgsqldriver
 ===========
 
-pgsqldriver is a PostgreSQL driver for the [experimental Go SQL database package]
-(https://code.google.com/p/go/source/detail?r=d21caa7909f29cdc).
-
-See https://twitter.com/#!/bradfitz/status/119577116978315264
-for the initial announcement of the database driver package, and links
-to the first code snapshot and background document.
-
-WARNING
--------
-
-Given that the database package is itself experimental, and pgsqldriver
-in turn is an experimental implementation of a driver, it is currently intended
-purely to exercise the generic database API and is not intended to be used
-in any context where loss of data might cause anxiety.  You have been warned.
+pgsqldriver is a PostgreSQL driver for the [Go SQL database package]
+(http://weekly.golang.org/pkg/database/sql/).
 
 Installation
 ------------
 
-	cd $GOROOT/src/pkg
-	git clone git://github.com/jbarham/gopgsqldriver.git github.com/jbarham/gopgsqldriver
-	cd github.com/jbarham/gopgsqldriver
-	make install
+	git get github.com/jbarham/gopgsqldriver
 
-The package `Makefile` assumes that `pg_config` is in your `$PATH` to
-automatically determine the location of the PostgreSQL include directory and
-the `libpq` shared library.
+By default the package is configured to build on Linux.  Alternatively
+your can build it with the included `Makefile`, which assumes that `pg_config`
+is in your `$PATH` to automatically determine the location of the PostgreSQL
+include directory and the `libpq` shared library.
 
 Usage
 -----
