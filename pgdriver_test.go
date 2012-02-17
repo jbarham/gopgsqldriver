@@ -5,7 +5,6 @@
 package pgsqldriver
 
 import (
-	"bytes"
 	"database/sql"
 	"math"
 	"strconv"
@@ -37,16 +36,16 @@ func TestPq(t *testing.T) {
 	chkerr(t, err)
 
 	// Create test table, and schedule its deletion.
-	_, err = db.Exec("CREATE TABLE gopq_test (tf bool, i32 int, i64 bigint, s text, b bytea)")
+	_, err = db.Exec("CREATE TABLE gopq_test (tf bool, i32 int, i64 bigint, s text)")
 	chkerr(t, err)
 	defer db.Exec("DROP TABLE gopq_test")
 
 	// Insert test rows.
-	stmt, err := db.Prepare("INSERT INTO gopq_test VALUES ($1, $2, $3, $4, $5)")
+	stmt, err := db.Prepare("INSERT INTO gopq_test VALUES ($1, $2, $3, $4)")
 	chkerr(t, err)
 	defer stmt.Close()
 	for _, row := range testTuples {
-		_, err = stmt.Exec(row.tf, row.i32, row.i64, row.s, row.b)
+		_, err = stmt.Exec(row.tf, row.i32, row.i64, row.s)
 		chkerr(t, err)
 	}
 
@@ -72,9 +71,8 @@ func TestPq(t *testing.T) {
 		var i32 int
 		var i64 int64
 		var s string
-		var b []byte
 
-		err := rows.Scan(&tf, &i32, &i64, &s, &b)
+		err := rows.Scan(&tf, &i32, &i64, &s)
 		if err != nil {
 			t.Fatal("scan error:", err)
 		}
@@ -90,9 +88,6 @@ func TestPq(t *testing.T) {
 		}
 		if s != testTuples[i].s {
 			t.Fatal("bad string")
-		}
-		if !bytes.Equal(b, testTuples[i].b) {
-			t.Fatal("bad byte array")
 		}
 	}
 	rows.Close()
