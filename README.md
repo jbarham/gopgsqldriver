@@ -17,7 +17,7 @@ include directory and the `libpq` shared library.
 Usage
 -----
 
-	import "exp/sql"
+	import "database/sql"
 	import _ "github.com/jbarham/gopgsqldriver"
 		
 Note that by design pgsqldriver is not intended to be used directly.
