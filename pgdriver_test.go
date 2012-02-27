@@ -7,7 +7,6 @@ package pgsqldriver
 import (
 	"database/sql"
 	"math"
-	"strconv"
 	"testing"
 )
 
@@ -67,7 +66,7 @@ func TestPq(t *testing.T) {
 	rows, err = db.Query("SELECT * FROM gopq_test")
 	chkerr(t, err)
 	for i := 0; rows.Next(); i++ {
-		var tf string // 
+		var tf bool
 		var i32 int
 		var i64 int64
 		var s string
@@ -76,8 +75,7 @@ func TestPq(t *testing.T) {
 		if err != nil {
 			t.Fatal("scan error:", err)
 		}
-		// Current sql converter doesn't support bool types for Scan.
-		if tf != strconv.FormatBool(testTuples[i].tf) {
+		if tf != testTuples[i].tf {
 			t.Fatal("bad bool")
 		}
 		if i32 != testTuples[i].i32 {

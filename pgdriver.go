@@ -60,9 +60,9 @@ type Date struct {
 	time.Time
 }
 
-var _ sql.ScannerInto = (*Date)(nil)
+var _ sql.Scanner = (*Date)(nil)
 
-func (d *Date) ScanInto(value interface{}) error {
+func (d *Date) Scan(value interface{}) error {
 	switch s := value.(type) {
 	case string:
 		t, err := time.Parse("2006-01-02", s)
@@ -104,7 +104,7 @@ type driverConn struct {
 // Check that driverConn implements driver.Execer interface.
 var _ driver.Execer = (*driverConn)(nil)
 
-func (c *driverConn) exec(stmt string, args []interface{}) (cres *C.PGresult) {
+func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
 	defer C.free(unsafe.Pointer(stmtstr))
 	if len(args) == 0 {
@@ -117,7 +117,7 @@ func (c *driverConn) exec(stmt string, args []interface{}) (cres *C.PGresult) {
 	return cres
 }
 
-func (c *driverConn) Exec(query string, args []interface{}) (res driver.Result, err error) {
+func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
 	cres := c.exec(query, args)
 	if err = resultError(cres); err != nil {
 		C.PQclear(cres)
@@ -126,7 +126,7 @@ func (c *driverConn) Exec(query string, args []interface{}) (res driver.Result, 
 	defer C.PQclear(cres)
 	ns := C.GoString(C.PQcmdTuples(cres))
 	if ns == "" {
-		return driver.DDLSuccess, nil
+		return driver.ResultNoRows, nil
 	}
 	rowsAffected, err := strconv.ParseInt(ns, 10, 64)
 	if err != nil {
@@ -200,7 +200,7 @@ func (s *driverStmt) NumInput() int {
 	return s.nparams
 }
 
-func (s *driverStmt) exec(params []interface{}) *C.PGresult {
+func (s *driverStmt) exec(params []driver.Value) *C.PGresult {
 	stmtName := C.CString(s.name)
 	defer C.free(unsafe.Pointer(stmtName))
 	cparams := buildCArgs(params)
@@ -208,7 +208,7 @@ func (s *driverStmt) exec(params []interface{}) *C.PGresult {
 	return C.PQexecPrepared(s.db, stmtName, C.int(len(params)), cparams, nil, nil, 0)
 }
 
-func (s *driverStmt) Exec(args []interface{}) (res driver.Result, err error) {
+func (s *driverStmt) Exec(args []driver.Value) (res driver.Result, err error) {
 	cres := s.exec(args)
 	if err = resultError(cres); err != nil {
 		C.PQclear(cres)
@@ -222,7 +222,7 @@ func (s *driverStmt) Exec(args []interface{}) (res driver.Result, err error) {
 	return driver.RowsAffected(rowsAffected), nil
 }
 
-func (s *driverStmt) Query(args []interface{}) (driver.Rows, error) {
+func (s *driverStmt) Query(args []driver.Value) (driver.Rows, error) {
 	cres := s.exec(args)
 	if err := resultError(cres); err != nil {
 		C.PQclear(cres)
@@ -269,7 +269,7 @@ func argErr(i int, argType string, err string) error {
 	return errors.New(fmt.Sprintf("arg %d as %s: %s", i, argType, err))
 }
 
-func (r *driverRows) Next(dest []interface{}) error {
+func (r *driverRows) Next(dest []driver.Value) error {
 	r.currRow++
 	if r.currRow >= r.nrows {
 		return io.EOF
@@ -319,7 +319,7 @@ func (r *driverRows) Close() error {
 	return nil
 }
 
-func buildCArgs(params []interface{}) **C.char {
+func buildCArgs(params []driver.Value) **C.char {
 	sparams := make([]string, len(params))
 	for i, v := range params {
 		var str string
