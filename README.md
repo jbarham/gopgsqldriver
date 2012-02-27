@@ -7,7 +7,7 @@ pgsqldriver is a PostgreSQL driver for the [Go SQL database package]
 Installation
 ------------
 
-	git get github.com/jbarham/gopgsqldriver
+	go get github.com/jbarham/gopgsqldriver
 
 By default the package is configured to build on Linux.
 
