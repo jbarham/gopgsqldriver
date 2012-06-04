@@ -54,7 +54,7 @@ func resultError(res *C.PGresult) error {
 	return errors.New("result error: " + serr)
 }
 
-const timeFormat = "2006-01-02 15:04:05.000000-07"
+const timeFormat = "2006-01-02 15:04:05-07"
 
 type Date struct {
 	time.Time
@@ -66,6 +66,26 @@ func (d *Date) Scan(value interface{}) error {
 	switch s := value.(type) {
 	case string:
 		t, err := time.Parse("2006-01-02", s)
+		if err != nil {
+			return err
+		}
+		d.Time = t
+	default:
+		return errors.New("invalid type")
+	}
+	return nil
+}
+
+type DateTime struct {
+	time.Time
+}
+
+var _ sql.Scanner = (*DateTime)(nil)
+
+func (d *DateTime) Scan(value interface{}) error {
+	switch s := value.(type) {
+	case string:
+		t, err := time.Parse(timeFormat, s)
 		if err != nil {
 			return err
 		}
