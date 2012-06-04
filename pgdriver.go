@@ -7,7 +7,7 @@ package pgsqldriver
 
 /*
 #include <stdlib.h>
-#include <libpq-fe.h>
+#include <postgresql/libpq-fe.h>
 
 static char**makeCharArray(int size) {
 	return calloc(sizeof(char*), size);
