@@ -39,6 +39,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"net"
 	"unsafe"
 )
 
@@ -317,6 +318,12 @@ func (r *driverRows) Next(dest []driver.Value) error {
 				return argErr(i, "[]byte", err.Error())
 			}
 			dest[i] = buf
+		case INETOID:
+			ip := net.ParseIP(val)
+			if ip == nil {
+				return argErr(i, "IP", "invalid IP string format")
+			}
+			dest[i] = ip
 		case CHAROID, BPCHAROID, VARCHAROID, TEXTOID,
 			INT2OID, INT4OID, INT8OID, OIDOID, XIDOID,
 			FLOAT8OID, FLOAT4OID,
