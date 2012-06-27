@@ -7,7 +7,7 @@ package pgsqldriver
 
 /*
 #include <stdlib.h>
-#include <libpq-fe.h>
+#include <postgresql/libpq-fe.h>
 
 static char**makeCharArray(int size) {
 	return calloc(sizeof(char*), size);
@@ -39,6 +39,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"net"
 	"unsafe"
 )
 
@@ -54,7 +55,7 @@ func resultError(res *C.PGresult) error {
 	return errors.New("result error: " + serr)
 }
 
-const timeFormat = "2006-01-02 15:04:05.000000-07"
+const timeFormat = "2006-01-02 15:04:05-07"
 
 type Date struct {
 	time.Time
@@ -70,6 +71,30 @@ func (d *Date) Scan(value interface{}) error {
 			return err
 		}
 		d.Time = t
+	default:
+		return errors.New("invalid type")
+	}
+	return nil
+}
+
+type DateTime struct {
+	time.Time
+	Valid bool
+}
+
+var _ sql.Scanner = (*DateTime)(nil)
+
+func (d *DateTime) Scan(value interface{}) error {
+	switch s := value.(type) {
+	case string:
+		t, err := time.Parse(timeFormat, s)
+		if err != nil {
+			return err
+		}
+		d.Time = t
+		d.Valid = true
+	case nil:
+		d.Valid = false
 	default:
 		return errors.New("invalid type")
 	}
@@ -297,6 +322,12 @@ func (r *driverRows) Next(dest []driver.Value) error {
 				return argErr(i, "[]byte", err.Error())
 			}
 			dest[i] = buf
+		case INETOID:
+			ip := net.ParseIP(val)
+			if ip == nil {
+				return argErr(i, "IP", "invalid IP string format")
+			}
+			dest[i] = ip
 		case CHAROID, BPCHAROID, VARCHAROID, TEXTOID,
 			INT2OID, INT4OID, INT8OID, OIDOID, XIDOID,
 			FLOAT8OID, FLOAT4OID,

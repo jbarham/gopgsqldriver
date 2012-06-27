@@ -4,7 +4,7 @@
 # Do I care why? No, life is too short to debug C macros.
 # Easier to just run a script to extract type defines and be done with it.
 
-cat `pg_config --includedir-server`/catalog/pg_type.h | \
+cat `pg_config --includedir`/catalog/pg_type.h | \
 awk '
 BEGIN {
 	print "package pgsqldriver"
