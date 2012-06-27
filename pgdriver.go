@@ -79,6 +79,7 @@ func (d *Date) Scan(value interface{}) error {
 
 type DateTime struct {
 	time.Time
+	Valid bool
 }
 
 var _ sql.Scanner = (*DateTime)(nil)
@@ -91,6 +92,9 @@ func (d *DateTime) Scan(value interface{}) error {
 			return err
 		}
 		d.Time = t
+		d.Valid = true
+	case nil:
+		d.Valid = false
 	default:
 		return errors.New("invalid type")
 	}
