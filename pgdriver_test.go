@@ -89,4 +89,17 @@ func TestPq(t *testing.T) {
 		}
 	}
 	rows.Close()
+
+	// Error messages.
+	_, err = db.Exec("INSERT INTO gopq (i32) VALUES ('error')")
+	if err == nil {
+		t.Fatal("Error not found.")
+	}
+	msg := err.Error()
+	if len(msg) == 0 {
+		t.Fatal("Empty error message")
+	}
+	if msg[len(msg)-1] == '\n' {
+		t.Fatal("Error message ends with a line break")
+	}
 }
