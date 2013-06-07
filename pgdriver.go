@@ -320,9 +320,9 @@ func (r *driverRows) Close() error {
 }
 
 func buildCArgs(params []driver.Value) **C.char {
-	sparams := make([]string, len(params))
+	sparams := make([]interface{}, len(params))
 	for i, v := range params {
-		var str string
+		var str interface{}
 		switch v := v.(type) {
 		case []byte:
 			str = "\\x" + hex.EncodeToString(v)
@@ -334,6 +334,8 @@ func buildCArgs(params []driver.Value) **C.char {
 			}
 		case time.Time:
 			str = v.Format(timeFormat)
+		case nil:
+			str = nil
 		default:
 			str = fmt.Sprint(v)
 		}
@@ -341,8 +343,15 @@ func buildCArgs(params []driver.Value) **C.char {
 		sparams[i] = str
 	}
 	cparams := C.makeCharArray(C.int(len(sparams)))
+	converter := func(str interface{}) *C.char {
+		if str == nil {
+			return nil
+		}
+		return C.CString(str.(string))
+	}
+
 	for i, s := range sparams {
-		C.setArrayString(cparams, C.CString(s), C.int(i))
+		C.setArrayString(cparams, converter(s), C.int(i))
 	}
 	return cparams
 }
