@@ -89,4 +89,25 @@ func TestPq(t *testing.T) {
 		}
 	}
 	rows.Close()
+
+	// Insert NULL values.
+	_, err = stmt.Exec(nil, nil, nil, "test")
+	chkerr(t, err)
+
+	// Check if NULL were inserted.
+	rows, err = db.Query("SELECT COUNT(*) FROM gopq_test WHERE i32 IS NULL")
+	chkerr(t, err)
+
+	if !rows.Next() {
+		t.Fatal("Result.Next failed")
+	}
+
+	err = rows.Scan(&count)
+	chkerr(t, err)
+
+	if count != 1 {
+		t.Fatalf("invalid row count %d, expected %d", count, 1)
+	}
+
+	rows.Close()
 }
