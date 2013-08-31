@@ -24,8 +24,12 @@ static void freeCharArray(char **a, int size) {
 	free(a);
 }
 */
-// #cgo CFLAGS: -I/usr/local/pgsql/include
-// #cgo LDFLAGS: -L/usr/local/pgsql/lib -lpq
+// #cgo linux CFLAGS: -I/usr/local/pgsql/include
+// #cgo linux LDFLAGS: -L/usr/local/pgsql/lib -lpq
+// #cgo darwin CFLAGS: -I/usr/include
+// #cgo darwin LDFLAGS: -L/usr/lib -lpq
+// #cgo freebsd CFLAGS: -I/usr/local/include
+// #cgo freebsd LDFLAGS: -L/usr/local/lib -lpq
 import "C"
 
 import (
