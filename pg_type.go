@@ -20,6 +20,7 @@ const (
 	CIDOID              = 29
 	OIDVECTOROID        = 30
 	XMLOID              = 142
+	PGNODETREEOID       = 194
 	POINTOID            = 600
 	LSEGOID             = 601
 	PATHOID             = 602
@@ -37,8 +38,10 @@ const (
 	MACADDROID          = 829
 	INETOID             = 869
 	CIDROID             = 650
+	INT2ARRAYOID        = 1005
 	INT4ARRAYOID        = 1007
 	TEXTARRAYOID        = 1009
+	OIDARRAYOID         = 1028
 	FLOAT4ARRAYOID      = 1021
 	ACLITEMOID          = 1033
 	CSTRINGARRAYOID     = 1263
@@ -78,4 +81,5 @@ const (
 	ANYELEMENTOID       = 2283
 	ANYNONARRAYOID      = 2776
 	ANYENUMOID          = 3500
+	FDW_HANDLEROID      = 3115
 )

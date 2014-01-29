@@ -104,6 +104,9 @@ type driverConn struct {
 // Check that driverConn implements driver.Execer interface.
 var _ driver.Execer = (*driverConn)(nil)
 
+// Check that driverConn implements driver.Queryer interface
+var _ driver.Queryer = (*driverConn)(nil)
+
 func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
 	defer C.free(unsafe.Pointer(stmtstr))
@@ -133,6 +136,15 @@ func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result,
 		return
 	}
 	return driver.RowsAffected(rowsAffected), nil
+}
+
+func (c *driverConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+    cres := c.exec(query, args)
+    if err := resultError(cres); err != nil {
+        C.PQclear(cres)
+        return nil, err
+    }
+    return newResult(cres), nil
 }
 
 func (c *driverConn) Prepare(query string) (driver.Stmt, error) {
