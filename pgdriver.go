@@ -6,6 +6,7 @@
 package pgsqldriver
 
 /*
+#cgo CFLAGS: -I/usr/local/pgsql/include
 #include <stdlib.h>
 #include <libpq-fe.h>
 
@@ -51,7 +52,7 @@ func resultError(res *C.PGresult) error {
 	if serr == "" {
 		return nil
 	}
-	return errors.New("result error: " + serr)
+	return errors.New("SQLSTATE(" + C.GoString(C.PQresultErrorField(res, C.PG_DIAG_SQLSTATE)) + ")->" + serr)
 }
 
 const timeFormat = "2006-01-02 15:04:05.000000-07"
