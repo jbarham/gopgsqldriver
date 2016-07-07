@@ -6,7 +6,7 @@
 package pgsqldriver
 
 /*
-#cgo CFLAGS: -I/usr/local/pgsql/include
+#cgo CFLAGS: -I${SRCDIR}/.dep/include
 #include <stdlib.h>
 #include <libpq-fe.h>
 
@@ -25,8 +25,8 @@ static void freeCharArray(char **a, int size) {
 	free(a);
 }
 */
-// #cgo CFLAGS: -I/usr/local/pgsql/include
-// #cgo LDFLAGS: -L/usr/local/pgsql/lib -lpq
+// #cgo CFLAGS: -I${SRCDIR}/.dep/include
+// #cgo LDFLAGS: -L${SRCDIR}/.dep/lib -lpq
 import "C"
 
 import (
@@ -140,12 +140,12 @@ func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result,
 }
 
 func (c *driverConn) Query(query string, args []driver.Value) (driver.Rows, error) {
-    cres := c.exec(query, args)
-    if err := resultError(cres); err != nil {
-        C.PQclear(cres)
-        return nil, err
-    }
-    return newResult(cres), nil
+	cres := c.exec(query, args)
+	if err := resultError(cres); err != nil {
+		C.PQclear(cres)
+		return nil, err
+	}
+	return newResult(cres), nil
 }
 
 func (c *driverConn) Prepare(query string) (driver.Stmt, error) {
