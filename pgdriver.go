@@ -6,6 +6,7 @@
 package pgsqldriver
 
 /*
+#cgo CFLAGS: -I${SRCDIR}/.dep/include
 #include <stdlib.h>
 #include <libpq-fe.h>
 
@@ -24,8 +25,8 @@ static void freeCharArray(char **a, int size) {
 	free(a);
 }
 */
-// #cgo CFLAGS: -I/usr/local/pgsql/include
-// #cgo LDFLAGS: -L/usr/local/pgsql/lib -lpq
+// #cgo CFLAGS: -I${SRCDIR}/.dep/include
+// #cgo LDFLAGS: -L${SRCDIR}/.dep/lib -lpq
 import "C"
 
 import (
@@ -51,7 +52,7 @@ func resultError(res *C.PGresult) error {
 	if serr == "" {
 		return nil
 	}
-	return errors.New("result error: " + serr)
+	return errors.New("SQLSTATE(" + C.GoString(C.PQresultErrorField(res, C.PG_DIAG_SQLSTATE)) + ")->" + serr)
 }
 
 const timeFormat = "2006-01-02 15:04:05.000000-07"
@@ -104,6 +105,9 @@ type driverConn struct {
 // Check that driverConn implements driver.Execer interface.
 var _ driver.Execer = (*driverConn)(nil)
 
+// Check that driverConn implements driver.Queryer interface
+var _ driver.Queryer = (*driverConn)(nil)
+
 func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
 	defer C.free(unsafe.Pointer(stmtstr))
@@ -133,6 +137,15 @@ func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result,
 		return
 	}
 	return driver.RowsAffected(rowsAffected), nil
+}
+
+func (c *driverConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	cres := c.exec(query, args)
+	if err := resultError(cres); err != nil {
+		C.PQclear(cres)
+		return nil, err
+	}
+	return newResult(cres), nil
 }
 
 func (c *driverConn) Prepare(query string) (driver.Stmt, error) {
