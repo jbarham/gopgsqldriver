@@ -29,6 +29,7 @@ static void freeCharArray(char **a, int size) {
 import "C"
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/hex"
@@ -176,6 +177,29 @@ func (c *driverConn) Begin() (driver.Tx, error) {
 		return nil, err
 	}
 	// driverConn implements driver.Tx interface.
+	return c, nil
+}
+
+func (c *driverConn) BeginTx(ctx context.Context, opts sql.TxOptions) (driver.Tx, error) {
+	queryStr := "BEGIN"
+	switch opts.Isolation {
+	case sql.LevelDefault, sql.LevelReadCommitted, sql.LevelReadUncommitted:
+		queryStr += " ISOLATION LEVEL READ COMMITTED,"
+	case sql.LevelRepeatableRead:
+		queryStr += " ISOLATION LEVEL REPEATABLE READ,"
+	case sql.LevelSerializable:
+		queryStr += " ISOLATION LEVEL SERIALIZABLE,"
+	default:
+		return nil, errors.New("driver: Unsupported isolation level.")
+	}
+	if opts.ReadOnly == true {
+		queryStr += " READ ONLY"
+	} else {
+		queryStr += " READ WRITE"
+	}
+	if _, err := c.Exec(queryStr, nil); err != nil {
+		return nil, err
+	}
 	return c, nil
 }
 
