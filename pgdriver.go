@@ -105,6 +105,8 @@ type driverConn struct {
 // Check that driverConn implements driver.Execer interface.
 var _ driver.Execer = (*driverConn)(nil)
 
+var _ driver.ConnBeginTx = (*driverConn)(nil)
+
 func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
 	defer C.free(unsafe.Pointer(stmtstr))
@@ -180,9 +182,9 @@ func (c *driverConn) Begin() (driver.Tx, error) {
 	return c, nil
 }
 
-func (c *driverConn) BeginTx(ctx context.Context, opts sql.TxOptions) (driver.Tx, error) {
+func (c *driverConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	queryStr := "BEGIN"
-	switch opts.Isolation {
+	switch sql.IsolationLevel(opts.Isolation) {
 	case sql.LevelDefault, sql.LevelReadCommitted, sql.LevelReadUncommitted:
 		queryStr += " ISOLATION LEVEL READ COMMITTED,"
 	case sql.LevelRepeatableRead:
