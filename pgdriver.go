@@ -40,7 +40,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 	"unsafe"
+
+	"github.com/la880703/gopgsqldriver/types"
 )
 
 func connError(db *C.PGconn) error {
@@ -62,6 +65,7 @@ type Date struct {
 }
 
 var _ sql.Scanner = (*Date)(nil)
+var _ sql.Scanner = (*types.DateTime)(nil)
 
 func (d *Date) Scan(value interface{}) error {
 	switch s := value.(type) {
@@ -330,7 +334,10 @@ func (r *driverRows) Next(dest []driver.Value) error {
 			NUMERICOID:
 			dest[i] = val
 		default:
-			return errors.New(fmt.Sprintf("unsupported type oid: %d", vtype))
+			if utf8.Valid([]byte(val)) == false {
+				return errors.New(fmt.Sprintf("unsupported type oid: %d", vtype))
+			}
+			dest[i] = val
 		}
 	}
 	return nil
