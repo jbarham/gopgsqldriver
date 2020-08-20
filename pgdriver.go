@@ -60,26 +60,8 @@ func resultError(res *C.PGresult) error {
 
 const timeFormat = "2006-01-02 15:04:05.000000-07"
 
-type Date struct {
-	time.Time
-}
-
-var _ sql.Scanner = (*Date)(nil)
+var _ sql.Scanner = (*types.Date)(nil)
 var _ sql.Scanner = (*types.DateTime)(nil)
-
-func (d *Date) Scan(value interface{}) error {
-	switch s := value.(type) {
-	case string:
-		t, err := time.Parse("2006-01-02", s)
-		if err != nil {
-			return err
-		}
-		d.Time = t
-	default:
-		return errors.New("invalid type")
-	}
-	return nil
-}
 
 type postgresDriver struct{}
 
@@ -106,10 +88,10 @@ type driverConn struct {
 	stmtNum int
 }
 
-// Check that driverConn implements driver.Execer interface.
+// Checks that driverConn implements some interfaces.
 var _ driver.Execer = (*driverConn)(nil)
-
 var _ driver.ConnBeginTx = (*driverConn)(nil)
+var _ driver.SessionResetter = (*driverConn)(nil)
 
 func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
@@ -140,6 +122,15 @@ func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result,
 		return
 	}
 	return driver.RowsAffected(rowsAffected), nil
+}
+
+func (c *driverConn) ResetSession(ctx context.Context) error {
+	var err error = nil
+	C.PQreset(c.db)
+	if C.PQstatus(c.db) != C.CONNECTION_OK {
+		err = driver.ErrBadConn
+	}
+	return err
 }
 
 func (c *driverConn) Prepare(query string) (driver.Stmt, error) {

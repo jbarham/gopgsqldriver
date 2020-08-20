@@ -63,3 +63,21 @@ func (dt *DateTime) Scan(v interface{}) error {
 	}
 	return nil
 }
+
+type Date struct {
+	time.Time
+}
+
+func (d *Date) Scan(value interface{}) error {
+	switch s := value.(type) {
+	case string:
+		t, err := time.Parse("2006-01-02", s)
+		if err != nil {
+			return err
+		}
+		d.Time = t
+	default:
+		return errors.New("invalid type")
+	}
+	return nil
+}
