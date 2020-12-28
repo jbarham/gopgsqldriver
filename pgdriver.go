@@ -6,6 +6,8 @@
 package pgsqldriver
 
 /*
+#cgo CFLAGS: -I/usr/local/include -I/usr/local/include/postgresql -I/usr/include/postgresql
+
 #include <stdlib.h>
 #include <libpq-fe.h>
 
