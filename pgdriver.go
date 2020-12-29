@@ -6,6 +6,8 @@
 package pgsqldriver
 
 /*
+#cgo CFLAGS: -I/usr/local/include -I/usr/local/include/postgresql -I/usr/include/postgresql
+
 #include <stdlib.h>
 #include <libpq-fe.h>
 
@@ -29,6 +31,7 @@ static void freeCharArray(char **a, int size) {
 import "C"
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/hex"
@@ -39,7 +42,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 	"unsafe"
+
+	"github.com/la880703/gopgsqldriver/types"
 )
 
 func connError(db *C.PGconn) error {
@@ -56,25 +62,8 @@ func resultError(res *C.PGresult) error {
 
 const timeFormat = "2006-01-02 15:04:05.000000-07"
 
-type Date struct {
-	time.Time
-}
-
-var _ sql.Scanner = (*Date)(nil)
-
-func (d *Date) Scan(value interface{}) error {
-	switch s := value.(type) {
-	case string:
-		t, err := time.Parse("2006-01-02", s)
-		if err != nil {
-			return err
-		}
-		d.Time = t
-	default:
-		return errors.New("invalid type")
-	}
-	return nil
-}
+var _ sql.Scanner = (*types.Date)(nil)
+var _ sql.Scanner = (*types.DateTime)(nil)
 
 type postgresDriver struct{}
 
@@ -101,8 +90,10 @@ type driverConn struct {
 	stmtNum int
 }
 
-// Check that driverConn implements driver.Execer interface.
+// Checks that driverConn implements some interfaces.
 var _ driver.Execer = (*driverConn)(nil)
+var _ driver.ConnBeginTx = (*driverConn)(nil)
+var _ driver.SessionResetter = (*driverConn)(nil)
 
 func (c *driverConn) exec(stmt string, args []driver.Value) (cres *C.PGresult) {
 	stmtstr := C.CString(stmt)
@@ -133,6 +124,15 @@ func (c *driverConn) Exec(query string, args []driver.Value) (res driver.Result,
 		return
 	}
 	return driver.RowsAffected(rowsAffected), nil
+}
+
+func (c *driverConn) ResetSession(ctx context.Context) error {
+	var err error = nil
+	C.PQreset(c.db)
+	if C.PQstatus(c.db) != C.CONNECTION_OK {
+		err = driver.ErrBadConn
+	}
+	return err
 }
 
 func (c *driverConn) Prepare(query string) (driver.Stmt, error) {
@@ -176,6 +176,29 @@ func (c *driverConn) Begin() (driver.Tx, error) {
 		return nil, err
 	}
 	// driverConn implements driver.Tx interface.
+	return c, nil
+}
+
+func (c *driverConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+	queryStr := "BEGIN"
+	switch sql.IsolationLevel(opts.Isolation) {
+	case sql.LevelDefault, sql.LevelReadCommitted, sql.LevelReadUncommitted:
+		queryStr += " ISOLATION LEVEL READ COMMITTED,"
+	case sql.LevelRepeatableRead:
+		queryStr += " ISOLATION LEVEL REPEATABLE READ,"
+	case sql.LevelSerializable:
+		queryStr += " ISOLATION LEVEL SERIALIZABLE,"
+	default:
+		return nil, errors.New("driver: Unsupported isolation level.")
+	}
+	if opts.ReadOnly == true {
+		queryStr += " READ ONLY"
+	} else {
+		queryStr += " READ WRITE"
+	}
+	if _, err := c.Exec(queryStr, nil); err != nil {
+		return nil, err
+	}
 	return c, nil
 }
 
@@ -304,7 +327,10 @@ func (r *driverRows) Next(dest []driver.Value) error {
 			NUMERICOID:
 			dest[i] = val
 		default:
-			return errors.New(fmt.Sprintf("unsupported type oid: %d", vtype))
+			if utf8.Valid([]byte(val)) == false {
+				return errors.New(fmt.Sprintf("unsupported type oid: %d", vtype))
+			}
+			dest[i] = val
 		}
 	}
 	return nil
